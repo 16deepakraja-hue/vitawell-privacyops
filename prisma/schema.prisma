@@ -1,0 +1,127 @@
+// VitaWell PrivacyOps — Phase 1: Data Mapping
+// Models the Record of Processing for VitaWell Health Technologies.
+// Source of truth: VitaWell Health Technologies — Company Case Study.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+// Sensitivity tier of a data category.
+enum DataType {
+  ORDINARY // ordinary personal data (name, email, IP, etc.)
+  SPECIAL // GDPR Art. 9 special-category / health data
+  GOV_ID // government identifiers (Aadhaar / PAN / passport)
+  BIOMETRIC // biometric / genetic data
+}
+
+// ---------------------------------------------------------------------------
+// Core data-mapping entities
+// ---------------------------------------------------------------------------
+
+/// A business process that involves personal data (case study §5 + §9).
+model ProcessingActivity {
+  id             String    @id @default(cuid())
+  name           String    @unique
+  description    String
+  purpose        String
+  gdprLegalBasis String // e.g. "Contract (Art. 6(1)(b))"
+  art9Condition  String? // GDPR Art. 9 condition for health data, if applicable
+  dpdpBasis      String // India DPDP Act, 2023 basis
+  riskLevel      RiskLevel @default(MEDIUM)
+  crossBorder    Boolean   @default(false)
+
+  dataSubjects  DataSubject[]  @relation("ActivitySubjects")
+  dataCategories DataCategory[] @relation("ActivityCategories")
+  vendors       Vendor[]       @relation("ActivityVendors")
+  systems       System[]       @relation("ActivitySystems")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// A category of people whose data VitaWell holds (case study §3).
+model DataSubject {
+  id           String  @id @default(cuid())
+  category     String  @unique
+  examples     String
+  notes        String?
+  isVulnerable Boolean @default(false)
+
+  activities ProcessingActivity[] @relation("ActivitySubjects")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// A category of personal data collected (case study §4).
+model DataCategory {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  type      DataType @default(ORDINARY)
+  examples  String
+  collected Boolean  @default(true) // false = explicitly NOT collected (e.g. biometric)
+
+  activities ProcessingActivity[] @relation("ActivityCategories")
+  retention  RetentionSchedule[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// A third-party processor / sub-processor (case study §8).
+model Vendor {
+  id                String  @id @default(cuid())
+  name              String  @unique
+  role              String
+  location          String // jurisdiction(s)
+  dataShared        String
+  hasDPA            Boolean @default(true) // Data Processing Agreement in place
+  transferSafeguard String? // e.g. "SCCs + EU-US DPF" for US transfers
+
+  activities ProcessingActivity[] @relation("ActivityVendors")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// An internal system that stores or processes personal data (case study §7).
+model System {
+  id       String @id @default(cuid())
+  name     String @unique
+  purpose  String
+  dataHeld String
+
+  activities ProcessingActivity[] @relation("ActivitySystems")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// How long a class of data is retained and why (case study §11).
+model RetentionSchedule {
+  id       String  @id @default(cuid())
+  dataType String  @unique // human label, e.g. "Clinical / medical records"
+  period   String // e.g. "3 years post last consultation"
+  driver   String // legal / policy driver
+
+  dataCategoryId String?
+  dataCategory   DataCategory? @relation(fields: [dataCategoryId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
