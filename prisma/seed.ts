@@ -8,6 +8,7 @@
  */
 
 import { PrismaClient, RiskLevel, DataType } from "@prisma/client";
+import { scoreDpia, buildRisksFromScore } from "../src/lib/risk-engine";
 
 const prisma = new PrismaClient();
 
@@ -15,6 +16,9 @@ async function main() {
   console.log("Seeding VitaWell data map…");
 
   // Clean slate (order respects relations).
+  await prisma.mitigationAction.deleteMany();
+  await prisma.risk.deleteMany();
+  await prisma.dPIA.deleteMany();
   await prisma.retentionSchedule.deleteMany();
   await prisma.processingActivity.deleteMany();
   await prisma.vendor.deleteMany();
@@ -454,8 +458,156 @@ async function main() {
     });
   }
 
+  // -------------------------------------------------------------------------
+  // Phase 2 — Sample DPIAs (based on the VitaWell case study)
+  // -------------------------------------------------------------------------
+  type DpiaSeed = {
+    projectName: string;
+    purpose: string;
+    businessOwner: string;
+    status: "DRAFT" | "IN_REVIEW" | "APPROVED" | "REJECTED";
+    specialCategoryData: boolean;
+    internationalTransfers: boolean;
+    automatedDecisionMaking: boolean;
+    largeScale: boolean;
+    biometricData: boolean;
+    subjects: string[];
+    cats: string[];
+    vendors: string[];
+    /** mitigations keyed by RiskCategory to attach after risks are generated */
+    mitigations?: { category: string; description: string; owner: string; status?: "OPEN" | "IN_PROGRESS" | "COMPLETED" }[];
+  };
+
+  const dpiaSeeds: DpiaSeed[] = [
+    {
+      projectName: "Teleconsultation & AI Clinical Triage Platform",
+      purpose:
+        "Deliver video doctor consultations with AI symptom triage and e-prescriptions for patients in India and the EU — VitaWell's highest-risk flagship process.",
+      businessOwner: "Head of Clinical Operations",
+      status: "IN_REVIEW",
+      specialCategoryData: true,
+      internationalTransfers: true,
+      automatedDecisionMaking: true,
+      largeScale: true,
+      biometricData: false,
+      subjects: ["Patients / end users", "Doctors & wellness coaches"],
+      cats: ["Identity & contact data", "Health data"],
+      vendors: ["Twilio", "AWS", "Diagnostic-lab partner"],
+      mitigations: [
+        {
+          category: "HEALTH_DATA",
+          description: "Encrypt clinical records at rest (AES-256) and restrict EHR access to the treating clinician via RBAC.",
+          owner: "CISO",
+          status: "IN_PROGRESS",
+        },
+        {
+          category: "CROSS_BORDER",
+          description: "Execute SCCs + EU-US DPF with Twilio and complete a transfer risk assessment (Schrems II).",
+          owner: "DPO",
+          status: "OPEN",
+        },
+        {
+          category: "AUTOMATED_DECISION",
+          description: "Add human-in-the-loop review so the AI symptom checker only assists — never finalises — a diagnosis.",
+          owner: "Head of Product",
+          status: "OPEN",
+        },
+        {
+          category: "LARGE_SCALE",
+          description: "Apply data minimisation and 3-year clinical retention with automated purge jobs.",
+          owner: "Data Engineering Lead",
+          status: "COMPLETED",
+        },
+      ],
+    },
+    {
+      projectName: "Corporate Wellness Program (B2B)",
+      purpose:
+        "Administer employer-sponsored wellness plans, bulk-enrol employees, and provide aggregated, anonymized wellness reporting to corporate clients.",
+      businessOwner: "VP of Corporate Partnerships",
+      status: "APPROVED",
+      specialCategoryData: true,
+      internationalTransfers: true,
+      automatedDecisionMaking: false,
+      largeScale: false,
+      biometricData: false,
+      subjects: ["Corporate client employees", "Corporate client contacts"],
+      cats: ["Identity & contact data", "Health data"],
+      vendors: ["AWS"],
+      mitigations: [
+        {
+          category: "HEALTH_DATA",
+          description: "Ensure employers only ever receive aggregated, non-identifiable wellness metrics — never individual health data.",
+          owner: "DPO",
+          status: "COMPLETED",
+        },
+      ],
+    },
+    {
+      projectName: "Marketing & Website Analytics",
+      purpose:
+        "Run email campaigns and measure website usage with pseudonymized analytics to acquire and engage prospects.",
+      businessOwner: "Head of Growth",
+      status: "DRAFT",
+      specialCategoryData: false,
+      internationalTransfers: true,
+      automatedDecisionMaking: false,
+      largeScale: false,
+      biometricData: false,
+      subjects: ["Website visitors / prospects", "Corporate client contacts"],
+      cats: ["Identity & contact data", "Account & device data"],
+      vendors: ["SendGrid", "Mixpanel"],
+    },
+  ];
+
+  for (const d of dpiaSeeds) {
+    const scoring = scoreDpia({
+      specialCategoryData: d.specialCategoryData,
+      biometricData: d.biometricData,
+      internationalTransfers: d.internationalTransfers,
+      automatedDecisionMaking: d.automatedDecisionMaking,
+      largeScale: d.largeScale,
+    });
+    const risks = buildRisksFromScore(scoring);
+
+    const dpia = await prisma.dPIA.create({
+      data: {
+        projectName: d.projectName,
+        purpose: d.purpose,
+        businessOwner: d.businessOwner,
+        status: d.status,
+        specialCategoryData: d.specialCategoryData,
+        internationalTransfers: d.internationalTransfers,
+        automatedDecisionMaking: d.automatedDecisionMaking,
+        largeScale: d.largeScale,
+        riskScore: scoring.score,
+        riskLevel: scoring.level,
+        dataSubjects: { connect: d.subjects.map((s) => ({ id: subj[s].id })) },
+        dataCategories: { connect: d.cats.map((c) => ({ id: cat[c].id })) },
+        vendors: { connect: d.vendors.map((v) => ({ id: ven[v].id })) },
+        risks: { create: risks },
+      },
+      include: { risks: true },
+    });
+
+    // Attach sample mitigations to the matching generated risks.
+    for (const m of d.mitigations ?? []) {
+      const risk = dpia.risks.find((r) => r.category === m.category);
+      if (risk) {
+        await prisma.mitigationAction.create({
+          data: {
+            riskId: risk.id,
+            description: m.description,
+            owner: m.owner,
+            status: m.status ?? "OPEN",
+          },
+        });
+      }
+    }
+  }
+
   console.log(
-    `Seeded: ${subjects.length} subjects, ${categories.length} categories, ${systems.length} systems, ${vendors.length} vendors, ${activities.length} activities, ${retention.length} retention rules.`
+    `Seeded: ${subjects.length} subjects, ${categories.length} categories, ${systems.length} systems, ${vendors.length} vendors, ${activities.length} activities, ${retention.length} retention rules, ${dpiaSeeds.length} DPIAs.`
   );
 }
 

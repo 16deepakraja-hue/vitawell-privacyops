@@ -1,20 +1,27 @@
-# VitaWell PrivacyOps — Data Mapping (Phase 1)
+# VitaWell PrivacyOps
 
 A privacy operations tool for **VitaWell Health Technologies**, a fictional HealthTech /
 telemedicine SaaS operating in **India and the EU** and subject to both **UK/EU GDPR** and
 India's **DPDP Act 2023**.
 
-This repository contains **Phase 1 only — the Data Mapping module**: a living *record of
-processing* that maps how personal data flows through the business. DPIA, ROPA exports, DSAR
-handling and full Vendor Management are intentionally **out of scope** for this phase.
+Built in phases:
 
+- **Phase 1 — Data Mapping**: a living *record of processing* that maps how personal data flows
+  through the business.
+- **Phase 2 — DPIA**: Data Protection Impact Assessments with an automated risk-scoring engine,
+  a risk register, mitigation tracking and PDF export (GDPR Art. 35). Integrates directly with the
+  Phase 1 inventory.
+
+ROPA exports, DSAR handling and full Vendor Management remain on the roadmap.
 All data shipped in the seed is taken from the VitaWell case study and is entirely fictional.
 
 ## Features
 
+### Phase 1 — Data Mapping
+
 | # | Feature | Description |
 |---|---------|-------------|
-| 1 | **Dashboard** | Counts across the data map, plus high-risk (DPIA-candidate), cross-border and special-category highlights. |
+| 1 | **Dashboard** | Counts across the data map, plus high-risk, cross-border and special-category highlights, and a DPIA-program summary. |
 | 2 | **Processing Activities** | Every business process that touches personal data, with purpose, GDPR + DPDP legal bases, Art. 9 conditions, risk level, and the subjects/data/vendors/systems involved. |
 | 3 | **Data Subjects** | Categories of people whose data is held (incl. vulnerable-subject flags). |
 | 4 | **Data Categories** | Personal-data categories classified by sensitivity (ordinary / special-category / government ID / biometric). |
@@ -22,6 +29,18 @@ All data shipped in the seed is taken from the VitaWell case study and is entire
 | 6 | **Retention Schedule** | How long each class of data is retained and the legal/policy driver. |
 | 7 | **Search** | Free-text search on every list page (server-side via Prisma). |
 | 8 | **Filter** | Dropdown filters per page (risk, sensitivity type, vendor location, DPA status, cross-border…). |
+
+### Phase 2 — DPIA
+
+| Feature | Description |
+|---------|-------------|
+| **DPIA register** (`/dpia`) | All assessments with risk scores + dashboard statistics (totals by level, open mitigations). Searchable & filterable. |
+| **New DPIA** (`/dpia/new`) | Form capturing project name, purpose, business owner, data subjects/categories/vendors (from the Phase 1 inventory), and screening factors — with a **live risk-score preview**. |
+| **DPIA detail** (`/dpia/[id]`) | Overview, risk gauge, risk register and mitigation tracking, workflow status, and PDF export. |
+| **Risk-scoring engine** | Health +20, Biometric +25, Cross-border +15, Automated decision-making +20, Large-scale +20 (capped at 100). Levels: 0–30 Low · 31–60 Medium · 61–100 High. See `src/lib/risk-engine.ts`. |
+| **Risk Register** | Each triggered factor becomes a risk (likelihood × impact). Risks can also be added manually. |
+| **Mitigation Tracking** | Add/track controls per risk with owner, due date and status (Open / In progress / Completed). |
+| **PDF export** | A print-optimised report at `/dpia/[id]/print` → "Print / Save as PDF". |
 
 ## Tech stack
 
@@ -35,14 +54,20 @@ server component re-queries Prisma, and the same filters are exposed as JSON API
 ## Data model
 
 ```
-ProcessingActivity ──┬─< many-to-many >── DataSubject
+ProcessingActivity ──┬─< many-to-many >── DataSubject ──────┐
                      ├─< many-to-many >── DataCategory ──< RetentionSchedule
-                     ├─< many-to-many >── Vendor
-                     └─< many-to-many >── System
+                     ├─< many-to-many >── Vendor ────────────┤
+                     └─< many-to-many >── System             │
+                                                             │
+DPIA ──┬─< many-to-many >── DataSubject / DataCategory / Vendor  (re-uses the inventory)
+       └──< Risk ──< MitigationAction
 ```
 
 `ProcessingActivity` is the hub of the map: each activity links the people, the data, the
 processors and the internal systems involved. `RetentionSchedule` attaches to `DataCategory`.
+
+A `DPIA` re-uses the same `DataSubject` / `DataCategory` / `Vendor` inventory, and owns a
+`Risk` register; each `Risk` owns its `MitigationAction`s (cascade-deleted with the DPIA).
 
 ## Getting started
 
@@ -76,6 +101,14 @@ npm run dev
 
 Open http://localhost:3000.
 
+> **Upgrading an existing Phase 1 database to Phase 2?** The schema gained the `DPIA`, `Risk`
+> and `MitigationAction` models. Apply the change with a new migration and reseed:
+>
+> ```bash
+> npx prisma migrate dev --name add_dpia
+> npm run db:seed
+> ```
+
 ### Useful scripts
 
 | Script | Purpose |
@@ -88,7 +121,7 @@ Open http://localhost:3000.
 
 ## API
 
-All endpoints are `GET` and accept the same query parameters as the UI filters.
+### Data Mapping (read-only `GET`, same query params as the UI filters)
 
 | Endpoint | Query params |
 |----------|--------------|
@@ -98,40 +131,57 @@ All endpoints are `GET` and accept the same query parameters as the UI filters.
 | `/api/vendors` | `q`, `location` (US/EU/India), `dpa` (true/false) |
 | `/api/retention` | `q` |
 
+### DPIA
+
+| Method & endpoint | Purpose |
+|-------------------|---------|
+| `GET /api/dpia` | List DPIAs (`q`, `level`, `status`) |
+| `POST /api/dpia` | Create a DPIA — runs the scoring engine and auto-generates the risk register |
+| `GET /api/dpia/[id]` | Fetch one DPIA with risks + mitigations |
+| `PATCH /api/dpia/[id]` | Update workflow status (DRAFT / IN_REVIEW / APPROVED / REJECTED) |
+| `DELETE /api/dpia/[id]` | Delete a DPIA (cascades to risks & mitigations) |
+| `POST /api/risks` | Add a manual risk to a DPIA |
+| `DELETE /api/risks/[id]` | Remove a risk |
+| `POST /api/mitigations` | Add a mitigation action to a risk |
+| `PATCH /api/mitigations/[id]` | Update a mitigation (status/owner/due date) |
+| `DELETE /api/mitigations/[id]` | Remove a mitigation |
+
 Example:
 
 ```bash
 curl "http://localhost:3000/api/processing-activities?risk=HIGH&crossBorder=true"
-curl "http://localhost:3000/api/vendors?location=US"
+curl "http://localhost:3000/api/dpia?level=HIGH"
+curl -X POST http://localhost:3000/api/dpia -H "Content-Type: application/json" \
+  -d '{"projectName":"New telehealth feature","purpose":"...","businessOwner":"DPO","specialCategoryData":true,"internationalTransfers":true,"largeScale":true}'
 ```
 
-Each response is `{ "count": <n>, "data": [ ... ] }`.
+Read endpoints respond `{ "count": <n>, "data": [ ... ] }`; mutations respond `{ "data": {...} }`.
 
 ## Project structure
 
 ```
 vitawell-privacyops/
 ├─ prisma/
-│  ├─ schema.prisma          # Database models
-│  └─ seed.ts                # VitaWell case-study seed data
+│  ├─ schema.prisma          # Database models (Data Mapping + DPIA)
+│  └─ seed.ts                # VitaWell case-study seed data + 3 sample DPIAs
 ├─ src/
 │  ├─ app/
 │  │  ├─ layout.tsx          # Shell + sidebar
 │  │  ├─ page.tsx            # Dashboard
-│  │  ├─ processing-activities/page.tsx
-│  │  ├─ data-subjects/page.tsx
-│  │  ├─ data-categories/page.tsx
-│  │  ├─ vendors/page.tsx
-│  │  ├─ retention/page.tsx
-│  │  └─ api/                # JSON API route handlers
-│  ├─ components/            # Sidebar, DataTable, Toolbar, StatCard, Badge…
-│  └─ lib/prisma.ts          # Prisma client singleton
+│  │  ├─ processing-activities/ · data-subjects/ · data-categories/ · vendors/ · retention/
+│  │  ├─ dpia/               # DPIA register, /new, /[id], /[id]/print
+│  │  └─ api/                # JSON API route handlers (incl. dpia, risks, mitigations)
+│  ├─ components/
+│  │  ├─ Sidebar.tsx, DataTable.tsx, Toolbar.tsx, StatCard.tsx, Badge.tsx, PageHeader.tsx
+│  │  └─ dpia/               # DpiaForm, RiskGauge, DpiaActions, AddRiskForm, MitigationTracker, PrintButton
+│  └─ lib/
+│     ├─ prisma.ts           # Prisma client singleton
+│     └─ risk-engine.ts      # DPIA risk-scoring engine
 └─ README.md
 ```
 
 ## Roadmap (future phases — not built yet)
 
-- Phase 2: DPIA workflow (Teleconsultation is the flagship trigger)
 - Phase 3: ROPA export (Art. 30 records)
 - Phase 4: DSAR handling
 - Phase 5: full Vendor / sub-processor management

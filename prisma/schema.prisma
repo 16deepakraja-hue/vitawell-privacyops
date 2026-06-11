@@ -63,6 +63,7 @@ model DataSubject {
   isVulnerable Boolean @default(false)
 
   activities ProcessingActivity[] @relation("ActivitySubjects")
+  dpias      DPIA[]               @relation("DpiaSubjects")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -78,6 +79,7 @@ model DataCategory {
 
   activities ProcessingActivity[] @relation("ActivityCategories")
   retention  RetentionSchedule[]
+  dpias      DPIA[]               @relation("DpiaCategories")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -94,6 +96,7 @@ model Vendor {
   transferSafeguard String? // e.g. "SCCs + EU-US DPF" for US transfers
 
   activities ProcessingActivity[] @relation("ActivityVendors")
+  dpias      DPIA[]               @relation("DpiaVendors")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -121,6 +124,97 @@ model RetentionSchedule {
 
   dataCategoryId String?
   dataCategory   DataCategory? @relation(fields: [dataCategoryId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ===========================================================================
+// Phase 2 — DPIA (Data Protection Impact Assessment)
+// ===========================================================================
+
+enum DpiaStatus {
+  DRAFT
+  IN_REVIEW
+  APPROVED
+  REJECTED
+}
+
+/// The risk-scoring factors recognised by the engine (see src/lib/risk-engine.ts).
+enum RiskCategory {
+  HEALTH_DATA
+  BIOMETRIC_DATA
+  CROSS_BORDER
+  AUTOMATED_DECISION
+  LARGE_SCALE
+  OTHER
+}
+
+enum MitigationStatus {
+  OPEN
+  IN_PROGRESS
+  COMPLETED
+}
+
+/// A Data Protection Impact Assessment for a processing project (GDPR Art. 35).
+model DPIA {
+  id          String     @id @default(cuid())
+  projectName String
+  purpose     String
+  businessOwner String
+  status      DpiaStatus @default(DRAFT)
+
+  // Risk-screening factors (drive the scoring engine).
+  internationalTransfers   Boolean @default(false)
+  automatedDecisionMaking  Boolean @default(false)
+  specialCategoryData      Boolean @default(false)
+  largeScale               Boolean @default(false)
+
+  // Engine output (persisted for fast listing / dashboards).
+  riskScore Int       @default(0)
+  riskLevel RiskLevel @default(LOW)
+
+  // Re-uses the Data Mapping inventory (Phase 1).
+  dataSubjects   DataSubject[]  @relation("DpiaSubjects")
+  dataCategories DataCategory[] @relation("DpiaCategories")
+  vendors        Vendor[]       @relation("DpiaVendors")
+
+  risks Risk[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// An identified risk within a DPIA (the Risk Register).
+model Risk {
+  id          String       @id @default(cuid())
+  dpiaId      String
+  dpia        DPIA         @relation(fields: [dpiaId], references: [id], onDelete: Cascade)
+  title       String
+  description String
+  category    RiskCategory @default(OTHER)
+
+  // Classic likelihood x impact register (1-5 each); score = product (max 25).
+  likelihood Int       @default(3)
+  impact     Int       @default(3)
+  score      Int       @default(9)
+  level      RiskLevel @default(MEDIUM)
+
+  mitigations MitigationAction[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// A mitigation / control tracked against a risk (Mitigation Tracking).
+model MitigationAction {
+  id          String           @id @default(cuid())
+  riskId      String
+  risk        Risk             @relation(fields: [riskId], references: [id], onDelete: Cascade)
+  description String
+  owner       String
+  status      MitigationStatus @default(OPEN)
+  dueDate     DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

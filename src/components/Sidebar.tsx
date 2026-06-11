@@ -10,6 +10,7 @@ const links = [
   { href: "/data-categories", label: "Data Categories", icon: "🗂" },
   { href: "/vendors", label: "Vendors", icon: "🏢" },
   { href: "/retention", label: "Retention Schedule", icon: "⏳" },
+  { href: "/dpia", label: "DPIA", icon: "🛡" },
 ];
 
 export function Sidebar() {

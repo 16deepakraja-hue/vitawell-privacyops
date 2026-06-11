@@ -16,6 +16,9 @@ export default async function DashboardPage() {
     crossBorderCount,
     specialCategoryCount,
     usVendorCount,
+    dpiaCount,
+    highRiskDpiaCount,
+    openMitigationCount,
   ] = await Promise.all([
     prisma.processingActivity.count(),
     prisma.dataSubject.count(),
@@ -29,6 +32,9 @@ export default async function DashboardPage() {
     prisma.processingActivity.count({ where: { crossBorder: true } }),
     prisma.dataCategory.count({ where: { type: "SPECIAL" } }),
     prisma.vendor.count({ where: { location: { contains: "US" } } }),
+    prisma.dPIA.count(),
+    prisma.dPIA.count({ where: { riskLevel: "HIGH" } }),
+    prisma.mitigationAction.count({ where: { status: { not: "COMPLETED" } } }),
   ]);
 
   return (
@@ -64,6 +70,25 @@ export default async function DashboardPage() {
           label="US-based processors"
           value={usVendorCount}
           hint="Need SCCs / EU-US DPF"
+        />
+      </div>
+
+      <div className="mt-8 flex items-center justify-between">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
+          DPIA program
+        </h2>
+        <Link href="/dpia" className="text-sm font-medium text-brand-700 hover:underline">
+          View DPIA register →
+        </Link>
+      </div>
+      <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <StatCard label="DPIAs" value={dpiaCount} href="/dpia" />
+        <StatCard label="High-risk DPIAs" value={highRiskDpiaCount} hint="Score 61–100" href="/dpia" />
+        <StatCard
+          label="Open mitigations"
+          value={openMitigationCount}
+          hint="Controls not yet completed"
+          href="/dpia"
         />
       </div>
 

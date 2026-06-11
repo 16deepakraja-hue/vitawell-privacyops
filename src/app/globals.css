@@ -10,3 +10,21 @@ body {
 body {
   @apply bg-gray-50 text-gray-900 antialiased;
 }
+
+/* Print / "Save as PDF" support for DPIA export */
+@media print {
+  aside,
+  .no-print {
+    display: none !important;
+  }
+  main {
+    padding: 0 !important;
+  }
+  body {
+    background: #fff !important;
+  }
+  .print-page {
+    box-shadow: none !important;
+    border: none !important;
+  }
+}
