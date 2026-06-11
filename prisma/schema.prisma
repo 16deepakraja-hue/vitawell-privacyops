@@ -3,12 +3,18 @@
 // Source of truth: VitaWell Health Technologies — Company Case Study.
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  // "native" for local dev; "rhel-openssl-3.0.x" for Vercel's serverless runtime.
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  // Pooled connection (PgBouncer) used by the app at runtime.
+  url       = env("DATABASE_URL")
+  // Direct (non-pooled) connection used for migrations. Falls back to DATABASE_URL
+  // locally if DIRECT_URL is unset is NOT automatic — set both (same value is fine locally).
+  directUrl = env("DIRECT_URL")
 }
 
 // ---------------------------------------------------------------------------
