@@ -19,6 +19,8 @@ next-env.d.ts
 prisma/*.db
 
 # misc
+.devserver.log
+.devserver.err.log
 .DS_Store
 *.pem
 npm-debug.log*
