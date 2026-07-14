@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Warrior Physique Workout</title>
+<style>
+  :root {
+    --bg: #0d0f14;
+    --panel: #161a22;
+    --panel-2: #1e232e;
+    --line: #2a3140;
+    --text: #e8ecf3;
+    --muted: #9aa4b6;
+    --accent: #d4a017;
+    --accent-2: #c0392b;
+    --good: #3fb27f;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 0 20px 80px; }
+
+  header {
+    background: linear-gradient(135deg, #1a1d26 0%, #0d0f14 100%);
+    border-bottom: 3px solid var(--accent);
+    padding: 56px 20px 48px;
+    text-align: center;
+  }
+  header .kicker {
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    font-size: 12px;
+    color: var(--accent);
+    font-weight: 700;
+  }
+  header h1 {
+    font-size: clamp(34px, 7vw, 60px);
+    font-weight: 800;
+    margin: 10px 0 8px;
+    letter-spacing: 1px;
+  }
+  header p { color: var(--muted); max-width: 640px; margin: 0 auto; }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 14px;
+    margin: 34px 0;
+  }
+  .stat {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 18px;
+    text-align: center;
+  }
+  .stat .num { font-size: 26px; font-weight: 800; color: var(--accent); }
+  .stat .lbl { font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); }
+
+  h2 {
+    font-size: 24px;
+    margin: 40px 0 6px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--line);
+  }
+  h2 .tag { font-size: 12px; color: var(--muted); font-weight: 500; }
+
+  .day {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    overflow: hidden;
+    margin-top: 20px;
+  }
+  .day-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 20px;
+    background: var(--panel-2);
+    border-bottom: 1px solid var(--line);
+  }
+  .day-head h3 { font-size: 18px; }
+  .day-head .focus {
+    font-size: 12px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-weight: 700;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 12px 20px; text-align: left; font-size: 15px; }
+  th {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    border-bottom: 1px solid var(--line);
+  }
+  tbody tr { border-bottom: 1px solid rgba(42,49,64,0.5); }
+  tbody tr:last-child { border-bottom: none; }
+  td.ex { font-weight: 600; }
+  td.sets { color: var(--accent); font-weight: 700; white-space: nowrap; }
+  td.rest { color: var(--muted); white-space: nowrap; }
+
+  .notes {
+    background: var(--panel);
+    border-left: 3px solid var(--accent-2);
+    border-radius: 0 12px 12px 0;
+    padding: 18px 22px;
+    margin-top: 26px;
+  }
+  .notes h4 { margin-bottom: 8px; color: var(--accent-2); text-transform: uppercase; letter-spacing: 1px; font-size: 13px; }
+  .notes ul { padding-left: 20px; color: var(--muted); }
+  .notes li { margin: 4px 0; }
+
+  .principles { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 16px; margin-top: 20px; }
+  .principle { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px; }
+  .principle h4 { color: var(--accent); margin-bottom: 6px; }
+  .principle p { color: var(--muted); font-size: 14px; }
+
+  footer { text-align: center; color: var(--muted); font-size: 13px; margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--line); }
+
+  @media print {
+    body { background: #fff; color: #000; }
+    .day, .stat, .notes, .principle { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="kicker">Aesthetic Strength Program</div>
+  <h1>WARRIOR PHYSIQUE</h1>
+  <p>A 5-day upper/lower emphasis split built to forge the classic warrior look — broad shoulders, a tapered waist, dense arms, and functional core strength.</p>
+</header>
+
+<div class="wrap">
+
+  <div class="stats">
+    <div class="stat"><div class="num">5</div><div class="lbl">Days / Week</div></div>
+    <div class="stat"><div class="num">45–60</div><div class="lbl">Min / Session</div></div>
+    <div class="stat"><div class="num">8–12</div><div class="lbl">Rep Range</div></div>
+    <div class="stat"><div class="num">Inter.</div><div class="lbl">Level</div></div>
+  </div>
+
+  <h2>The Split <span class="tag">— weekly overview</span></h2>
+  <div class="day">
+    <table>
+      <thead><tr><th>Day</th><th>Focus</th></tr></thead>
+      <tbody>
+        <tr><td class="ex">Monday</td><td>Chest &amp; Shoulders (Push)</td></tr>
+        <tr><td class="ex">Tuesday</td><td>Back &amp; Rear Delts (Pull)</td></tr>
+        <tr><td class="ex">Wednesday</td><td>Legs &amp; Core</td></tr>
+        <tr><td class="ex">Thursday</td><td>Arms &amp; Shoulders</td></tr>
+        <tr><td class="ex">Friday</td><td>Full Body Warrior Conditioning</td></tr>
+        <tr><td class="ex">Sat / Sun</td><td>Active recovery — walking, mobility, stretching</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- DAY 1 -->
+  <h2>Day 1 — Chest &amp; Shoulders</h2>
+  <div class="day">
+    <div class="day-head"><h3>Push Power</h3><span class="focus">Chest · Front/Side Delts · Triceps</span></div>
+    <table>
+      <thead><tr><th>Exercise</th><th>Sets × Reps</th><th>Rest</th></tr></thead>
+      <tbody>
+        <tr><td class="ex">Barbell Bench Press</td><td class="sets">4 × 6–8</td><td class="rest">2 min</td></tr>
+        <tr><td class="ex">Incline Dumbbell Press</td><td class="sets">4 × 8–10</td><td class="rest">90 sec</td></tr>
+        <tr><td class="ex">Standing Overhead Press</td><td class="sets">4 × 6–8</td><td class="rest">2 min</td></tr>
+        <tr><td class="ex">Lateral Raises</td><td class="sets">4 × 12–15</td><td class="rest">45 sec</td></tr>
+        <tr><td class="ex">Cable Chest Fly</td><td class="sets">3 × 12–15</td><td class="rest">45 sec</td></tr>
+        <tr><td class="ex">Overhead Triceps Extension</td><td class="sets">3 × 10–12</td><td class="rest">45 sec</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- DAY 2 -->
+  <h2>Day 2 — Back &amp; Rear Delts</h2>
+  <div class="day">
+    <div class="day-head"><h3>The Taper</h3><span class="focus">Lats · Traps · Rear Delts · Biceps</span></div>
+    <table>
+      <thead><tr><th>Exercise</th><th>Sets × Reps</th><th>Rest</th></tr></thead>
+      <tbody>
+        <tr><td class="ex">Weighted Pull-Ups</td><td class="sets">4 × 6–8</td><td class="rest">2 min</td></tr>
+        <tr><td class="ex">Barbell Bent-Over Row</td><td class="sets">4 × 8–10</td><td class="rest">90 sec</td></tr>
+        <tr><td class="ex">Single-Arm Dumbbell Row</td><td class="sets">3 × 10–12</td><td class="rest">60 sec</td></tr>
+        <tr><td class="ex">Face Pulls</td><td class="sets">4 × 15–20</td><td class="rest">45 sec</td></tr>
+        <tr><td class="ex">Lat Pulldown (wide)</td><td class="sets">3 × 12–15</td><td class="rest">45 sec</td></tr>
+        <tr><td class="ex">Barbell / Dumbbell Curls</td><td class="sets">3 × 10–12</td><td class="rest">45 sec</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- DAY 3 -->
+  <h2>Day 3 — Legs &amp; Core</h2>
+  <div class="day">
+    <div class="day-head"><h3>Foundation</h3><span class="focus">Quads · Hamstrings · Glutes · Abs</span></div>
+    <table>
+      <thead><tr><th>Exercise</th><th>Sets × Reps</th><th>Rest</th></tr></thead>
+      <tbody>
+        <tr><td class="ex">Back Squat</td><td class="sets">5 × 5</td><td class="rest">2–3 min</td></tr>
+        <tr><td class="ex">Romanian Deadlift</td><td class="sets">4 × 8–10</td><td class="rest">2 min</td></tr>
+        <tr><td class="ex">Walking Lunges</td><td class="sets">3 × 12 / leg</td><td class="rest">90 sec</td></tr>
+        <tr><td class="ex">Leg Curl</td><td class="sets">3 × 12–15</td><td class="rest">45 sec</td></tr>
+        <tr><td class="ex">Standing Calf Raise</td><td class="sets">4 × 15–20</td><td class="rest">45 sec</td></tr>
+        <tr><td class="ex">Hanging Leg Raises</td><td class="sets">3 × 12–15</td><td class="rest">45 sec</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- DAY 4 -->
+  <h2>Day 4 — Arms &amp; Shoulders</h2>
+  <div class="day">
+    <div class="day-head"><h3>The Guns</h3><span class="focus">Biceps · Triceps · Delts</span></div>
+    <table>
+      <thead><tr><th>Exercise</th><th>Sets × Reps</th><th>Rest</th></tr></thead>
+      <tbody>
+        <tr><td class="ex">Close-Grip Bench Press</td><td class="sets">4 × 8–10</td><td class="rest">90 sec</td></tr>
+        <tr><td class="ex">Incline Dumbbell Curl</td><td class="sets">4 × 10–12</td><td class="rest">60 sec</td></tr>
+        <tr><td class="ex">Arnold Press</td><td class="sets">4 × 10–12</td><td class="rest">75 sec</td></tr>
+        <tr><td class="ex">Cable Rope Pushdown</td><td class="sets">3 × 12–15</td><td class="rest">45 sec</td></tr>
+        <tr><td class="ex">Hammer Curls</td><td class="sets">3 × 12–15</td><td class="rest">45 sec</td></tr>
+        <tr><td class="ex">Lateral Raise (drop set)</td><td class="sets">3 × 15+</td><td class="rest">45 sec</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- DAY 5 -->
+  <h2>Day 5 — Warrior Conditioning</h2>
+  <div class="day">
+    <div class="day-head"><h3>Battle Ready</h3><span class="focus">Full Body · Power · Endurance</span></div>
+    <table>
+      <thead><tr><th>Exercise</th><th>Sets × Reps</th><th>Rest</th></tr></thead>
+      <tbody>
+        <tr><td class="ex">Deadlift</td><td class="sets">4 × 5</td><td class="rest">2–3 min</td></tr>
+        <tr><td class="ex">Push Press</td><td class="sets">4 × 6</td><td class="rest">90 sec</td></tr>
+        <tr><td class="ex">Kettlebell Swings</td><td class="sets">4 × 20</td><td class="rest">60 sec</td></tr>
+        <tr><td class="ex">Farmer's Carry</td><td class="sets">3 × 40 m</td><td class="rest">75 sec</td></tr>
+        <tr><td class="ex">Burpees</td><td class="sets">3 × 15</td><td class="rest">60 sec</td></tr>
+        <tr><td class="ex">Plank</td><td class="sets">3 × 60 sec</td><td class="rest">45 sec</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="notes">
+    <h4>Progression &amp; Execution</h4>
+    <ul>
+      <li><strong>Progressive overload:</strong> add weight or reps each week while staying in the target range.</li>
+      <li><strong>Warm up:</strong> 5–10 min light cardio plus 2 warm-up sets before your first heavy lift.</li>
+      <li><strong>Tempo:</strong> control the eccentric (2–3 sec down), explode on the concentric.</li>
+      <li><strong>Deload:</strong> every 5–6 weeks, cut volume by ~40% for one week to recover.</li>
+      <li><strong>Form first:</strong> never sacrifice technique to chase a number.</li>
+    </ul>
+  </div>
+
+  <h2>Warrior Principles</h2>
+  <div class="principles">
+    <div class="principle"><h4>Nutrition</h4><p>Eat ~1g protein per lb of bodyweight. Slight surplus to build, slight deficit to lean out. Whole foods first.</p></div>
+    <div class="principle"><h4>Sleep</h4><p>7–9 hours nightly. Muscle is built in recovery, not just in the gym. Guard your sleep like training.</p></div>
+    <div class="principle"><h4>Consistency</h4><p>The best program is the one you follow. Discipline over motivation — show up every scheduled day.</p></div>
+    <div class="principle"><h4>Hydration</h4><p>3–4 L of water daily. Performance, recovery, and focus all suffer when you're under-hydrated.</p></div>
+  </div>
+
+  <footer>
+    Warrior Physique Program · For general fitness use — consult a physician before beginning any new exercise program.
+  </footer>
+
+</div>
+</body>
+</html>
